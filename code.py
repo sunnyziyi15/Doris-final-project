@@ -196,7 +196,7 @@ choropleth_fig.update_layout(
 # Adjust margins to bring the map closer to the page title
 choropleth_fig.update_layout(
     autosize=False,
-    width=1000,
+    width=800,
     height=700,
 )
 
