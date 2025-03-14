@@ -2,39 +2,39 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-
+# Streamlit Page Configuration
 st.set_page_config(layout="wide")
 
-
+# Title
 st.title("Bubble Chart: Obesity Prevalence, Median Household Income, and GDP Across U.S. States")
 
-
+# Load CSV Data
 obesity = pd.read_csv("Obesity.csv")
 household = pd.read_csv("Household.csv")
 gdp = pd.read_csv("GDP.csv")
 
-
+# Data Preprocessing
 obesity['State'] = obesity['State'].str.strip()
 household['State'] = household['State'].str.strip()
 gdp['State'] = gdp['State'].str.strip()
 
-
+# Merge DataFrames
 df = pd.merge(obesity, household, on="State", how="inner")
 df = pd.merge(df, gdp, on="State", how="inner")
 
-
+# Convert necessary columns to numeric
 df['Prevalence'] = pd.to_numeric(df['Prevalence'], errors="coerce")
 df['Median Household Income'] = pd.to_numeric(df['Median Household Income'], errors="coerce")
 df['GDP_2023'] = pd.to_numeric(df['GDP_2023'], errors="coerce")
 
-
+# Multi-select state filter
 selected_states = st.multiselect(
     "Select States for Comparison",
     df["State"].unique(),
     default=[]  
 )
 
-
+# Obesity rate range slider
 obesity_range = st.slider(
     "Select Obesity Prevalence Range (%)",
     min_value=int(df["Prevalence"].min()),
@@ -42,7 +42,7 @@ obesity_range = st.slider(
     value=(int(df["Prevalence"].min()), int(df["Prevalence"].max()))
 )
 
-
+# Income range slider
 income_range = st.slider(
     "Select Median Household Income Range ($)",
     min_value=int(df["Median Household Income"].min()),
@@ -51,7 +51,7 @@ income_range = st.slider(
     value=(int(df["Median Household Income"].min()), int(df["Median Household Income"].max()))
 )
 
-
+# Filter Data Based on Selection
 filtered_df = df[
     (df["Prevalence"] >= obesity_range[0]) & 
     (df["Prevalence"] <= obesity_range[1]) & 
@@ -59,11 +59,11 @@ filtered_df = df[
     (df["Median Household Income"] <= income_range[1])
 ]
 
-
+# If specific states are selected, filter the dataset
 if selected_states:
     filtered_df = filtered_df[filtered_df["State"].isin(selected_states)]
 
-
+# Create Interactive Bubble Chart
 bubble_fig = px.scatter(
     filtered_df,
     x="Prevalence",
@@ -79,10 +79,10 @@ bubble_fig.update_layout(
     height=500
 )
 
-
+# Display Chart
 st.plotly_chart(bubble_fig, use_container_width=True, key="unique_plotly_chart")
 
-
+# Observations and Insights
 st.markdown(
     """
     <div style="font-size:21px; line-height:1.2;">
@@ -98,15 +98,16 @@ st.markdown(
 st.markdown("<hr style='margin:40px 0;'>", unsafe_allow_html=True)
 
 
+# Choropleth Map 
 st.title("Choropleth Map: State Obesity Prevalence Rates")
 
-
+# Load CSV Data
 obesity = pd.read_csv("Obesity.csv")
 
-
+# Data preprocessing: Trim extra spaces
 obesity['State'] = obesity['State'].str.strip()
 
-
+# Mapping state names to abbreviations
 state_abbrev = {
     "Alabama": "AL",
     "Alaska": "AK",
@@ -167,12 +168,12 @@ state_abbrev = {
 df["code"] = df["State"].map(state_abbrev)
 df = df.dropna(subset=["code"])
 
-
+# Convert data types
 df["Prevalence"] = pd.to_numeric(df["Prevalence"], errors="coerce")
 df["Median Household Income"] = pd.to_numeric(df["Median Household Income"], errors="coerce")
 df["GDP_2023"] = pd.to_numeric(df["GDP_2023"], errors="coerce")
 
-
+# Create choropleth map with hover displaying Median Household Income and GDP
 choropleth_fig = px.choropleth(
     df,
     locations="code",
@@ -188,21 +189,18 @@ choropleth_fig = px.choropleth(
         "GDP_2023": "GDP (USD)"
     }
 )
-
-
 choropleth_fig.update_layout(
     title_font_size=20  
 )
 
-
+# Adjust margins to bring the map closer to the page title
 choropleth_fig.update_layout(
     autosize=False,
     width=1000,
     height=700,
 )
 
-
-
+# Adjust the color bar position and length for better alignment
 choropleth_fig.update_coloraxes(
     colorbar=dict(
         y=0.5,         
@@ -211,7 +209,7 @@ choropleth_fig.update_coloraxes(
     )
 )
 
-
+# Display the choropleth map and explanatory text side by side
 col1, col2 = st.columns([3, 2])
 with col1:
     st.plotly_chart(choropleth_fig, use_container_width=False)
@@ -235,7 +233,7 @@ with col2:
         unsafe_allow_html=True
     )
 
-
+# Data Sources
 st.markdown(
     """
     <hr style='margin:40px 0;'>
@@ -244,7 +242,7 @@ st.markdown(
     📚 <strong>Data Sources:</strong><br>
     - GDP by State: [U.S. Bureau of Economic Analysis (BEA)](https://www.bea.gov/data/gdp/gdp-state)<br>
     - Obesity Prevalence Rates: [Centers for Disease Control and Prevention (CDC)](https://www.cdc.gov/obesity/data-and-statistics/adult-obesity-prevalence-maps.html)<br>
-    - Median Household Income: [U.S. Census Bureau](https://www.census.gov/library/publications/2024/demo/p60-282.html)
+    - Median Household Income: [Federal Reserve Economic Data (FRED)](https://fred.stlouisfed.org/series/MEHOINUSA672N)
     </div>
     """,
     unsafe_allow_html=True
